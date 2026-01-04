@@ -1,8 +1,8 @@
 
-
+set SERVEROUTPUT ON;
+clear screen;
 
 Alter table employee ADD salary number (20) not null;
-
 
 
 
