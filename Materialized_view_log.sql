@@ -1,0 +1,7 @@
+
+set serveroutput on;
+clear screen;
+
+CREATE MATERIALIZED VIEW LOG ON employee
+WITH PRIMARY KEY
+INCLUDING NEW VALUES;
