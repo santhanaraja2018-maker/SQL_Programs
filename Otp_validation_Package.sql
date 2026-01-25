@@ -93,7 +93,7 @@ end;
 declare
  message varchar2(100);
 begin
- OTP_CHECKING.otp_validation(6382661912,776474,message);
+ OTP_CHECKING.otp_validation(6382661912,160388,message);
  DBMS_OUTPUT.put_line('Validate Result : '||message);
 
 end;
