@@ -1,0 +1,105 @@
+SET SERVEROUTPUT ON;
+CLEAR SCREEN;
+
+
+CREATE OR REPLACE PROCEDURE LEAVE_CREDIT ( 
+                                    P_EMP_ID NUMBER,
+                                    P_MESSAGE OUT VARCHAR2)
+
+        AS
+         L_JOINING_DAY NUMBER;
+         L_JOINING_MONTH NUMBER;
+         L_CASUAL NUMBER;
+         L_SICK NUMBER;
+         L_EARNED NUMBER;
+    BEGIN 
+        
+         SELECT TO_CHAR(SYSDATE,'DD'), TO_CHAR(SYSDATE,'MM') INTO L_JOINING_DAY, L_JOINING_MONTH FROM DUAL;
+         
+         IF L_JOINING_DAY <15 THEN
+             L_CASUAL := (12 - L_JOINING_MONTH)*0.5 + 0.5;
+             L_SICK := (12 - L_JOINING_MONTH)*0.5 +0.5;
+             L_EARNED := (12- L_JOINING_MONTH) + 1;
+         
+         ELSE 
+             L_CASUAL := (12 - L_JOINING_MONTH)*0.5 + 0.25;
+             L_SICK := (12 - L_JOINING_MONTH)*0.5 +0.25;
+             L_EARNED := (12- L_JOINING_MONTH) + 0.5;
+         
+         END IF;
+         
+         INSERT INTO employee_leave_management VALUES (P_EMP_ID, SYSDATE, L_CASUAL,L_SICK,L_EARNED);
+         COMMIT;
+         
+         P_MESSAGE := 'LEAVES CREDITED SUCCESSFULLY FOR EMPLOYEE : '||P_EMP_ID;
+            
+       
+END LEAVE_CREDIT;
+
+CREATE OR REPLACE PROCEDURE LEAVE_ROLL_OVER (P_MESSAGE OUT VARCHAR2)
+AS
+
+L_TABLE VARCHAR2(30);
+
+BEGIN 
+
+    L_TABLE := 'ELM_'|| TO_CHAR(SYSDATE, 'DD_MON_YYYY_HH24MISS');
+
+EXECUTE IMMEDIATE
+ 'CREATE TABLE '|| L_TABLE ||' AS SELECT * FROM EMPLOYEE_LEAVE_MANAGEMENT';
+
+ DBMS_OUTPUT.PUT_LINE('Backup table created: ' || L_TABLE);
+
+ UPDATE EMPLOYEE_LEAVE_MANAGEMENT SET 
+ CASUAL_LEAVE = 0,
+ SICK_LEAVE  = 0,
+ EARNED_LEAVE = 
+     CASE WHEN (NVL(EARNED_LEAVE,0) + 12)>40 THEN 40
+             ELSE NVL(EARNED_LEAVE,0) + 12
+     END;
+ 
+ COMMIT;
+ 
+ P_MESSAGE := 'LEAVES UPDATED SUCESSFULLY FOR ALL EMPLOYEES';
+ 
+EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK;
+        P_MESSAGE := 'ERROR: ' || SQLERRM;
+
+END LEAVE_ROLL_OVER;
+
+/
+
+DECLARE
+MESSAGE VARCHAR2(100);
+BEGIN
+lEAVE_CREDIT(102, MESSAGE);
+dbms_output.put_line(MESSAGE);
+END;
+
+
+DECLARE
+MESSAGE VARCHAR2(100);
+BEGIN
+LEAVE_ROLL_OVER( MESSAGE);
+dbms_output.put_line(MESSAGE);
+END;
+
+
+BEGIN 
+  dbms_scheduler.create_job(job_name=> 'YEARLY_LEAVE_ROLLOVER',
+  job_type=>'STORED_PROCEDURE',
+  job_action=>'LEAVE_ROLL_OVER',
+  start_date=>TO_DATE(
+  '01-JAN-2026 00:00:01',
+  'DD-MON-YYYY HH24:MI:SS'),
+  REPEAT_INTERVAL => 'FREQ=YEARLY',
+  ENABLED => TRUE );
+END;
+
+
+
+
+
+
