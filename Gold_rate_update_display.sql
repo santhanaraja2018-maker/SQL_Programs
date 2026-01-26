@@ -45,7 +45,7 @@ select to_char(gold_captured_date,'mon,dd,yyyy'),
        trim(to_char(gold_22c_rate,'9,99,999')) into p_gold_date,p_22c_gold_rate from gold_rates
            where trunc(gold_captured_date) = trunc(sysdate) and lower(city) = lower(p_city);
            
-           p_22c_gold_rate :='RS : '|| p_22c_gold_rate ||'/Gram(22ct)';
+           p_22c_gold_rate :='RS: '|| p_22c_gold_rate ||'/Gram(22ct)';
            p_gold := 'Gold';
 
            
@@ -58,7 +58,7 @@ end display_gold_rates;
 declare 
 result varchar2(100);
 begin
- gold_rates_daily_capture( 'madurai', 12000, 13000,to_date('23-01-26','dd,mm,rr'),result);
+ gold_rates_daily_capture( 'madurai', 12500, 13800,sysdate,result);
  dbms_output.put_line(result);
 end;
 
